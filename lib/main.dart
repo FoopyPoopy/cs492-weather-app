@@ -55,32 +55,30 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   // Add More names to myNames
   // use a number to track the index of the name you want to use.
   // Cycle through the names when you press the button, incrementing the number
   // When you reach the highest index, reset the number back to 0
   // Make sure that it's dynamic so if you add/remove names from the list, it still functions.
 
-  final List<String> _myNames = [
-    "Dan",
-    "Steve"
-  ];
+  final List<String> _myNames = ["Dan", "Steve", "Kevin", "Shane", "Jess"];
 
   String? _myName;
+
+  int _count = 0;
 
   @override
   void initState() {
     super.initState();
-    _myName = _myNames[0];   
-    
+    _myName = _myNames[0];
   }
 
-  void onPressed(){
+  void onPressed() {
     setState(() {
-      _myName = _myNames[1];
+      _myName = _myNames[_count]; // Assign the current name
+      _count = (_count + 1) %
+          _myNames.length; // Increment and cycle back to 0 if out of bounds
     });
-    
   }
 
   @override
@@ -132,11 +130,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             TextButton(
-              onPressed: onPressed, 
-              child: const Text("Press Me Please!!!!"))
+                onPressed: onPressed, child: const Text("Press Me Please!!!!"))
           ],
         ),
       ),
-     );
+    );
   }
 }
