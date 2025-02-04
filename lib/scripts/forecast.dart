@@ -2,7 +2,7 @@ import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 import 'package:weatherapp/scripts/time.dart';
 
-class Forecast{
+class Forecast {
   final String? name;
   final bool isDaytime;
   final int temperature;
@@ -35,57 +35,72 @@ class Forecast{
     required this.tempHighLow,
   });
 
-  factory Forecast.fromJson(Map<String, dynamic> json){
+  factory Forecast.fromJson(Map<String, dynamic> json) {
     return Forecast(
-      name: json["name"].isNotEmpty ? json["name"] : null,
-      isDaytime: json["isDaytime"],
-      temperature: json["temperature"],
-      temperatureUnit: json["temperatureUnit"],
-      windSpeed: json["windSpeed"],
-      windDirection: json["windDirection"],
-      shortForecast: json["shortForecast"],
-      detailedForecast: json["detailedForecast"].isNotEmpty ? json["detailedForecast"]: null ,
-      precipitationProbability: json["probabilityOfPrecipitation"]["value"],
-      humidity: json["relativeHumidity"] != null ? json["relativeHumidity"]["value"] : null,
-      dewpoint: json["dewpoint"]?["value"],
-      startTime: DateTime.parse(json["startTime"]).toLocal(),
-      endTime: DateTime.parse(json["endTime"]).toLocal(),
-      tempHighLow: null
-    );
+        name: json["name"].isNotEmpty ? json["name"] : null,
+        isDaytime: json["isDaytime"],
+        temperature: json["temperature"],
+        temperatureUnit: json["temperatureUnit"],
+        windSpeed: json["windSpeed"],
+        windDirection: json["windDirection"],
+        shortForecast: json["shortForecast"],
+        detailedForecast: json["detailedForecast"].isNotEmpty ? json["detailedForecast"] : null,
+        precipitationProbability: json["probabilityOfPrecipitation"]["value"],
+        humidity: json["relativeHumidity"] != null ? json["relativeHumidity"]["value"] : null,
+        dewpoint: json["dewpoint"]?["value"],
+        startTime: DateTime.parse(json["startTime"]).toLocal(),
+        endTime: DateTime.parse(json["endTime"]).toLocal(),
+        tempHighLow: null);
   }
 
   @override
-  String toString(){
+  String toString() {
     return "name: ${name ?? "None"}\n"
-          "isDaytime: ${isDaytime ? "Yes" : "No"}\n"
-          "temperature: $temperature\n"
-          "temperatureUnit: $temperatureUnit\n"
-          "windSpeed: $windSpeed\n"
-          "windDirection: $windDirection\n"
-          "shortForecast: $shortForecast\n"
-          "detailedForecast: $detailedForecast\n"
-          "precipitationProbability: ${precipitationProbability ?? "None"}\n"
-          "humidity: ${humidity ?? "None"}\n"
-          "dewpoint: ${dewpoint ?? "None"}\n"
-          "startTime: ${startTime.toLocal()}\n"
-          "endTime: ${endTime.toLocal()}\n"
-          "tempHighLow: ${tempHighLow ?? "None"}";
+        "isDaytime: ${isDaytime ? "Yes" : "No"}\n"
+        "temperature: $temperature\n"
+        "temperatureUnit: $temperatureUnit\n"
+        "windSpeed: $windSpeed\n"
+        "windDirection: $windDirection\n"
+        "shortForecast: $shortForecast\n"
+        "detailedForecast: $detailedForecast\n"
+        "precipitationProbability: ${precipitationProbability ?? "None"}\n"
+        "humidity: ${humidity ?? "None"}\n"
+        "dewpoint: ${dewpoint ?? "None"}\n"
+        "startTime: ${startTime.toLocal()}\n"
+        "endTime: ${endTime.toLocal()}\n"
+        "tempHighLow: ${tempHighLow ?? "None"}";
   }
 
-  String getIconPath(){
-    // TODO: Keep adding to this logic to try to get rid of question marks
-    // TODO: change the location in your android phone to at least 5 different location
-    // with different climates so you can eliminate more question marks
-    if (shortForecast.toLowerCase().contains("sunny")){
+  String getIconPath() {
+    String forecastFiller = shortForecast.toLowerCase();
+    //Tyler helped me out with this.
+    if (forecastFiller.contains("sunny")) {
       return "assets/weather_icons/sunny.svg";
-    }
-    else {
+    } else if (forecastFiller.contains("partly cloudy")) {
+      return "assets/weather_icons/partly_cloudy.svg";
+    } else if (forecastFiller.contains("heavy snow")) {
+      return "assets/weather_icons/heavy_snow.svg";
+    } else if (forecastFiller.contains("snow")) {
+      return "assets/weather_icons/snow_showers.svg";
+    } else if (forecastFiller.contains("cloudy")) {
+      return "assets/weather_icons/cloudy.svg";
+    } else if (forecastFiller.contains("rain")) {
+      return "assets/weather_icons/showers.svg";
+    } else if (forecastFiller.contains("thunderstorms")) {
+      return "assets/weather_icons/isolated_tstorms.svg";
+    } else if (forecastFiller.contains("sleet")) {
+      return "assets/weather_icons/wintry_mix.svg";
+    } else if (forecastFiller.contains("fog")) {
+      return "assets/weather_icons/fog.svg";
+    } else if (forecastFiller.contains("mostly clear")) {
+      return "assets/weather_icons/mostly_clear.svg";
+    } else {
       return "assets/weather_icons/question.svg";
     }
   }
 }
 
-Future<List<Forecast>> getForecastFromPoints(double lat, double lon) async{
+Future<List<Forecast>> getForecastFromPoints(double lat, double lon) async {
   // make a request to the weather api using the latitude and longitude and decode the json data
   String pointsUrl = "https://api.weather.gov/points/${lat},${lon}";
   Map<String, dynamic> pointsJson = await getRequestJson(pointsUrl);
@@ -98,7 +113,7 @@ Future<List<Forecast>> getForecastFromPoints(double lat, double lon) async{
   return processForecasts(forecastJson["properties"]["periods"]);
 }
 
-Future<List<Forecast>> getForecastHourlyFromPoints(double lat, double lon) async{
+Future<List<Forecast>> getForecastHourlyFromPoints(double lat, double lon) async {
   // make a request to the weather api using the latitude and longitude and decode the json data
   String pointsUrl = "https://api.weather.gov/points/${lat},${lon}";
   Map<String, dynamic> pointsJson = await getRequestJson(pointsUrl);
@@ -111,47 +126,44 @@ Future<List<Forecast>> getForecastHourlyFromPoints(double lat, double lon) async
   return processForecasts(forecastHourlyJson["properties"]["periods"]);
 }
 
-List<Forecast> processForecasts(List<dynamic> forecasts){
+List<Forecast> processForecasts(List<dynamic> forecasts) {
   List<Forecast> forecastObjs = [];
-  for (dynamic forecast in forecasts){
+  for (dynamic forecast in forecasts) {
     forecastObjs.add(Forecast.fromJson(forecast));
   }
   return forecastObjs;
 }
 
-Future<Map<String, dynamic>> getRequestJson(String url) async{
+Future<Map<String, dynamic>> getRequestJson(String url) async {
   http.Response r = await http.get(Uri.parse(url));
   return convert.jsonDecode(r.body);
 }
 
-
-Forecast getForecastDaily(Forecast forecast1, Forecast forecast2){
-  String tempHighLow = getTempHighLow(forecast1.temperature, forecast2.temperature, forecast1.temperatureUnit);
+Forecast getForecastDaily(Forecast forecast1, Forecast forecast2) {
+  String tempHighLow =
+      getTempHighLow(forecast1.temperature, forecast2.temperature, forecast1.temperatureUnit);
 
   return Forecast(
-    name: equalDates(DateTime.now(), forecast1.startTime) ? "Today" : forecast1.name, 
-    isDaytime: forecast1.isDaytime, 
-    temperature: forecast1.temperature, 
-    temperatureUnit: forecast1.temperatureUnit, 
-    windSpeed: forecast1.windSpeed, 
-    windDirection: forecast1.windDirection, 
-    shortForecast: forecast1.shortForecast, 
-    detailedForecast: forecast1.detailedForecast, 
-    precipitationProbability: forecast1.precipitationProbability, 
-    humidity: forecast1.humidity, 
-    dewpoint: forecast1.dewpoint, 
-    startTime: forecast1.startTime, 
-    endTime: forecast2.endTime, 
-    tempHighLow: tempHighLow);
-
+      name: equalDates(DateTime.now(), forecast1.startTime) ? "Today" : forecast1.name,
+      isDaytime: forecast1.isDaytime,
+      temperature: forecast1.temperature,
+      temperatureUnit: forecast1.temperatureUnit,
+      windSpeed: forecast1.windSpeed,
+      windDirection: forecast1.windDirection,
+      shortForecast: forecast1.shortForecast,
+      detailedForecast: forecast1.detailedForecast,
+      precipitationProbability: forecast1.precipitationProbability,
+      humidity: forecast1.humidity,
+      dewpoint: forecast1.dewpoint,
+      startTime: forecast1.startTime,
+      endTime: forecast2.endTime,
+      tempHighLow: tempHighLow);
 }
 
-String getTempHighLow(int temp1, int temp2, String tempUnit){
-  if (temp1 < temp2){
+String getTempHighLow(int temp1, int temp2, String tempUnit) {
+  if (temp1 < temp2) {
     return "$temp1°$tempUnit/$temp2°$tempUnit";
-  }
-  else {
+  } else {
     return "$temp2°$tempUnit/$temp1°$tempUnit";
   }
-
 }

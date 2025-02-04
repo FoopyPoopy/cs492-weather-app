@@ -4,13 +4,9 @@ import 'package:weatherapp/scripts/time.dart' as time;
 
 import 'package:flutter_svg/flutter_svg.dart';
 
-
-
 class ForecastSummaryWidget extends StatelessWidget {
-  const ForecastSummaryWidget({
-    super.key,
-    required forecast.Forecast currentForecast
-  }) : _forecast = currentForecast;
+  const ForecastSummaryWidget({super.key, required forecast.Forecast currentForecast})
+      : _forecast = currentForecast;
 
   final forecast.Forecast _forecast;
 
@@ -35,12 +31,11 @@ class ForecastSummaryWidget extends StatelessWidget {
               child: Column(
                 children: [
                   ForecastNameWidget(forecast: _forecast),
-                  WeatherIconWidget(iconPath: _forecast.getIconPath())
+                  WeatherIconWidget(iconPath: _forecast.getIconPath(), height: 50.0, width: 50.0)
                   // ShortForecastWidget(forecast: _forecast)
                 ],
               ),
             ),
-            
             Text(_forecast.tempHighLow ?? "${_forecast.temperature}°${_forecast.temperatureUnit}")
           ],
         ),
@@ -52,21 +47,25 @@ class ForecastSummaryWidget extends StatelessWidget {
 class WeatherIconWidget extends StatelessWidget {
   const WeatherIconWidget({
     super.key,
-    required String iconPath
-  }) : _iconPath = iconPath;
+    required String iconPath,
+    required double height,
+    required double width,
+  })  : _iconPath = iconPath,
+        _height = height,
+        _width = width;
 
   final String _iconPath;
+  final double _height;
+  final double _width;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: SvgPicture.asset(_iconPath, height: 50, width: 50),
+      child: SvgPicture.asset(_iconPath, height: _height, width: _width),
     );
   }
 }
-
-
 
 class ForecastNameWidget extends StatelessWidget {
   const ForecastNameWidget({
@@ -78,12 +77,8 @@ class ForecastNameWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      _forecast.name ?? time.convertTimestampToDayAndHour(_forecast.startTime.toLocal()),
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 12.0
-      ));
+    return Text(_forecast.name ?? time.convertTimestampToDayAndHour(_forecast.startTime.toLocal()),
+        textAlign: TextAlign.center, style: TextStyle(fontSize: 12.0));
   }
 }
 
@@ -97,10 +92,7 @@ class ShortForecastWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      _forecast.shortForecast,
-      textAlign: TextAlign.center,
-      style:TextStyle(fontSize: 9.0));
+    return Text(_forecast.shortForecast,
+        textAlign: TextAlign.center, style: TextStyle(fontSize: 9.0));
   }
 }
-
