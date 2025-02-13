@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:weatherapp/scripts/location.dart' as location;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 // TODO:
 // Refer to this documentation:
@@ -8,13 +10,21 @@ import 'package:weatherapp/scripts/location.dart' as location;
 // Load the saved locations from the file on initState
 // For now you don't need to worry about deleting data or ensuring no redundant data
 // HINT: You will likely want to create a fromJson() factory and a toJson() method to the location.dart Location class
+Future<String> get _localPath async {
+  final directory = await getApplicationDocumentsDirectory();
+  return directory.path;
+}
+
+Future<File> get _localFile async {
+  final path = await _localPath;
+  return File('$path/saved_locations.json');
+}
 
 class LocationTabWidget extends StatefulWidget {
-  const LocationTabWidget({
-    super.key,
-    required Function setLocation,
-    required location.Location? activeLocation
-  }) : _setLocation = setLocation, _location = activeLocation;
+  const LocationTabWidget(
+      {super.key, required Function setLocation, required location.Location? activeLocation})
+      : _setLocation = setLocation,
+        _location = activeLocation;
 
   final Function _setLocation;
   final location.Location? _location;
@@ -24,13 +34,34 @@ class LocationTabWidget extends StatefulWidget {
 }
 
 class _LocationTabWidgetState extends State<LocationTabWidget> {
-
   final List<location.Location> _savedLocations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _readLocations();
+  }
+
+  void _readLocations() async {
+    try {
+      final file = await _localFile;
+      String contents = await file.readAsString();
+      List<dynamic> locations = jsonDecode(contents);
+      List<location.Location> savedLocations =
+          locations.map((loc) => location.Location.fromJson(loc)).toList();
+      setState(() {
+        _savedLocations.addAll(savedLocations);
+      });
+    } catch (e) {
+      print("Error reading file: $e");
+    }
+  }
 
   void _setLocationFromAddress(String city, String state, String zip) async {
     // set location to null temporarily while it finds a new location
     widget._setLocation(null);
-    location.Location currentLocation = await location.getLocationFromAddress(city, state, zip) as location.Location;
+    location.Location currentLocation =
+        await location.getLocationFromAddress(city, state, zip) as location.Location;
     widget._setLocation(currentLocation);
     _addLocation(currentLocation);
   }
@@ -42,8 +73,7 @@ class _LocationTabWidgetState extends State<LocationTabWidget> {
     widget._setLocation(currentLocation);
   }
 
-  
-  void _addLocation(location.Location location){
+  void _addLocation(location.Location location) {
     setState(() {
       _savedLocations.add(location);
     });
@@ -55,7 +85,7 @@ class _LocationTabWidgetState extends State<LocationTabWidget> {
       children: [
         LocationDisplayWidget(activeLocation: widget._location),
         LoctionInputWidget(setLocation: _setLocationFromAddress), // pass in _addLocation
-        ElevatedButton(onPressed: ()=>{_setLocationFromGps()},child: const Text("Get From GPS")),
+        ElevatedButton(onPressed: () => {_setLocationFromGps()}, child: const Text("Get From GPS")),
         SavedLocationsWidget(locations: _savedLocations, setLocation: widget._setLocation)
       ],
     );
@@ -63,48 +93,54 @@ class _LocationTabWidgetState extends State<LocationTabWidget> {
 }
 
 class SavedLocationsWidget extends StatelessWidget {
-  const SavedLocationsWidget({
-    super.key,
-    required List<location.Location> locations,
-    required Function setLocation
-  }) : _locations = locations, _setLocation = setLocation;
+  const SavedLocationsWidget(
+      {super.key, required List<location.Location> locations, required Function setLocation})
+      : _locations = locations,
+        _setLocation = setLocation;
 
   final List<location.Location> _locations;
   final Function _setLocation;
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: _locations.map((loc)=>SavedLocationWidget(loc: loc, setLocation: _setLocation)).toList(),);
+    return Column(
+      children: _locations
+          .map((loc) => SavedLocationWidget(loc: loc, setLocation: _setLocation))
+          .toList(),
+    );
   }
 }
 
 class SavedLocationWidget extends StatelessWidget {
-  const SavedLocationWidget({
-    super.key,
-    required location.Location loc,
-    required Function setLocation
-  }) : _loc = loc, _setLocation = setLocation;
+  const SavedLocationWidget(
+      {super.key, required location.Location loc, required Function setLocation})
+      : _loc = loc,
+        _setLocation = setLocation;
 
   final location.Location _loc;
   final Function _setLocation;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: () {_setLocation(_loc);}, child: Text("${_loc.city}, ${_loc.state} ${_loc.zip}"));
+    return GestureDetector(
+        onTap: () {
+          _setLocation(_loc);
+        },
+        child: Text("${_loc.city}, ${_loc.state} ${_loc.zip}"));
   }
 }
 
 class LocationDisplayWidget extends StatelessWidget {
-  const LocationDisplayWidget({
-    super.key,
-    required location.Location? activeLocation
-  }) : _location = activeLocation;
+  const LocationDisplayWidget({super.key, required location.Location? activeLocation})
+      : _location = activeLocation;
 
   final location.Location? _location;
 
   @override
   Widget build(BuildContext context) {
-    return Text(_location != null ? "${_location.city}, ${_location.state} ${_location.zip}" : "No Location Set");
+    return Text(_location != null
+        ? "${_location.city}, ${_location.state} ${_location.zip}"
+        : "No Location Set");
   }
 }
 
@@ -121,31 +157,29 @@ class LoctionInputWidget extends StatefulWidget {
 }
 
 class _LoctionInputWidgetState extends State<LoctionInputWidget> {
-
   // values
   late String _city;
   late String _state;
   late String _zip;
-  
+
   @override
   void initState() {
     super.initState();
     _city = "";
     _state = "";
     _zip = "";
-
   }
 
   // update functions
-  void _updateCity(String value){
+  void _updateCity(String value) {
     _city = value;
   }
 
-  void _updateState(String value){
+  void _updateState(String value) {
     _state = value;
   }
 
-  void _updateZip(String value){
+  void _updateZip(String value) {
     _zip = value;
   }
 
@@ -163,7 +197,11 @@ class _LoctionInputWidgetState extends State<LoctionInputWidget> {
               LocationTextWidget(width: 100, text: "zip", updateText: _updateZip),
             ],
           ),
-          ElevatedButton(onPressed: () {widget._setLocation(_city, _state, _zip);}, child: Text("Get From Address"))
+          ElevatedButton(
+              onPressed: () {
+                widget._setLocation(_city, _state, _zip);
+              },
+              child: Text("Get From Address"))
         ],
       ),
     );
@@ -171,12 +209,11 @@ class _LoctionInputWidgetState extends State<LoctionInputWidget> {
 }
 
 class LocationTextWidget extends StatefulWidget {
-  const LocationTextWidget({
-    super.key,
-    required double width,
-    required String text,
-    required Function updateText
-  }): _width = width, _text = text, _updateText = updateText;
+  const LocationTextWidget(
+      {super.key, required double width, required String text, required Function updateText})
+      : _width = width,
+        _text = text,
+        _updateText = updateText;
 
   final double _width;
   final String _text;
@@ -187,7 +224,6 @@ class LocationTextWidget extends StatefulWidget {
 }
 
 class _LocationTextWidgetState extends State<LocationTextWidget> {
-
   // controllers
   late TextEditingController _controller;
 
@@ -196,7 +232,6 @@ class _LocationTextWidgetState extends State<LocationTextWidget> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
-
   }
 
   @override
@@ -204,12 +239,9 @@ class _LocationTextWidgetState extends State<LocationTextWidget> {
     return SizedBox(
       width: widget._width,
       child: TextField(
-        controller: _controller,
-        onChanged: (value) => {widget._updateText(value)},
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: widget._text
-      )),
+          controller: _controller,
+          onChanged: (value) => {widget._updateText(value)},
+          decoration: InputDecoration(border: OutlineInputBorder(), labelText: widget._text)),
     );
   }
 }
